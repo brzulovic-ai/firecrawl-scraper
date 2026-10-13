@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # The scraper frontend & proxy backend application
+  scraper-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: firecrawl-scraper-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - FIRECRAWL_API_URL=http://firecrawl:3002
+      # Or use your network-specific host directly:
+      # - FIRECRAWL_API_URL=http://inspiron:3002
+    volumes:
+      # Mounting point for persisting scraped markdown and JSON data files directly on your host machine!
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - firecrawl
+
+  # --- Self-Hosted Firecrawl Services (Optional, pre-configured if you want to run firecrawl locally) ---
+  firecrawl:
+    image: firecrawl/api:latest
+    container_name: firecrawl-api
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - REDIS_URL=redis://redis:6379
+      - PLAYWRIGHT_CHROME_EXECUTABLE_PATH=/usr/bin/google-chrome
+      # Add self-hosting keys if needed, e.g. license, OpenAI keys, etc.
+      - USE_SUB_SCRAPERS=true
+    depends_on:
+      - redis
+    restart: always
+
+  # Background worker for handling complex crawl jobs
+  firecrawl-worker:
+    image: firecrawl/api:latest
+    container_name: firecrawl-worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PLAYWRIGHT_CHROME_EXECUTABLE_PATH=/usr/bin/google-chrome
+      - WORKER_MODE=true
+    depends_on:
+      - redis
+    restart: always
+
+  # Redis instance for queuing jobs and caching
+  redis:
+    image: redis:alpine
+    container_name: firecrawl-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
+
+volumes:
+  redis-data:

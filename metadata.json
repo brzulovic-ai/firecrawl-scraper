@@ -1,0 +1,6 @@
+{
+  "name": "Firecrawl Scraper Frontend",
+  "description": "A full-stack frontend for local Firecrawl scraping and crawling with built-in markdown visualizers, parameter tweaking, and file archiving.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
